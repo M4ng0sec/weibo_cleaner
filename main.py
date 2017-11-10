@@ -4,22 +4,14 @@ import time
 import json
 
 
-# 在此复制微博网页版cookie, referer, url
-web_cookie = ''
-referer = ''
-get_id_url = ''
-# 根据自己微博数,设置要删除的最大页数, 一页大概十条微博
-max_pages = 200
-
-# 通过微博移动版获取微博id号,一次
+# 通过微博移动版获取微博id号,算法比较粗略,可能不完全,请多运行几次
 def get_mid(session, page):
     url = get_id_url + str(page)
-    response = session.get(get_id_url)
+    response = session.get(url)
     json_data = json.loads(response.text)
     mids = []
     for i in json_data['cards'][1:]:
         mids.append(i['mblog']['id'])
-        print mids
     return mids
 
 
@@ -29,16 +21,12 @@ def del_by_id(session, mid):
     form_data = {
         'mid': str(mid),
     }
-    print session.post(del_url, data=form_data).text
+    session.post(del_url, data=form_data).text
 
 
 # 发微博,测试用
 def add_weibo(session, text):
     url = 'https://weibo.com/aj/mblog/add?ajwvr=6&__rnd=1510279745199'
-    header = {
-        'Cookie': web_cookie,
-        'Referer': referer
-    }
     session.headers.update(header)
     form_data = {
         'location': 'v6_content_home',
@@ -56,10 +44,21 @@ def add_weibo(session, text):
                               'isPri': '0',
         '_t': '0',
     }
-    print session.post(url, data=form_data).text
+    session.post(url, data=form_data).text
 
 
 if __name__ == '__main__':
+    # 在此复制微博网页版cookie, referer, url
+    web_cookie = ''
+
+    referer = ''
+
+
+    get_id_url = ''
+
+
+    # 根据自己微博数,设置要删除的最大页数, 一页大概十条微博
+    max_pages = 5
     s = requests.session()
     header = {
         'Referer': referer,
@@ -77,7 +76,9 @@ if __name__ == '__main__':
         except Exception, e:
             print e
             break
-
+    print '您将要删除%d条微博' % len(mids)
+    time.sleep(2)
+    print '开始删除.....'
     # # 删除
     for i in range(len(mids)):
         del_by_id(s, mids[i])
